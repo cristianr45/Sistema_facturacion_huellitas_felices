@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Huellitas Felices</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <h1>Huellitas Felices</h1>
+        <nav class="main-menu">
+            <a href="#" class="menu-item" id="btn-empleados">Agregar Empleado</a>
+            <a href="#" class="menu-item" id="btn-clientes">Agregar Cliente</a>
+            <a href="#" class="menu-item" id="btn-servicios">Servicios</a>
+            <a href="#" class="menu-item" id="btn-facturacion">Facturación</a>
+            <a href="#" class="menu-item" id="btn-logout">Cerrar Sesión</a>
+          
+        </nav>
+    </header>
+
+    <main class="content-container" id="main-container">
+        <div id="dynamic-content">
+            <h2>Bienvenido al sistema de facturación</h2>
+            <p>Selecciona una opción del menú para comenzar a gestionar la veterinaria.</p>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Huellitas Felices</h3>
+                <p>Cuidando a tus mejores amigos con amor y profesionalismo desde 2024.</p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Enlaces Rápidos</h4>
+                <ul>
+                    <li><a href="#">Horarios de Atención</a></li>
+                    <li><a href="#">Políticas de Privacidad</a></li>
+                    <li><a href="#">Términos de Servicio</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>Contacto</h4>
+                <p>Dirección: Calle 123 Veterinaria, Medellín</p>
+                <p>Teléfono: +57 300 123 4567</p>
+                <p>Email: soporte@huellitas.com</p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2026 Huellitas Felices - Evidencia SENA ADSO. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

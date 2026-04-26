@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Huellitas Felices</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <form id="login-form">
+            <h2>Huellitas Felices</h2>
+            <p>Acceso para Colaboradores</p>
+            <input type="text" id="user" placeholder="Usuario" required>
+            <input type="password" id="pass" placeholder="Contraseña" required>
+            <button type="submit">Entrar al Sistema</button>
+        </form>
+    </div>
+
+    <script>
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const usuario = document.getElementById('user').value;
+        const password = document.getElementById('pass').value;
+
+        try {
+            const respuesta = await fetch('http://localhost:3000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, password })
+            });
+
+            const data = await respuesta.json();
+
+            if (respuesta.ok) {
+                // Guardamos el nombre del empleado para usarlo en el dashboard
+                localStorage.setItem('usuarioNombre', data.usuario);
+                window.location.href = "dashboard.html";
+            } else {
+                // Si las credenciales son incorrectas
+                alert(data.error || "Usuario o contraseña incorrectos");
+            }
+        } catch (error) {
+            console.error("Error en el login:", error);
+            alert("No hay conexión con el servidor. Asegúrate de que server.js esté corriendo.");
+        }
+    });
+</script>
+
+</body>
+</html>

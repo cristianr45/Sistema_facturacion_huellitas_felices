@@ -1,0 +1,63 @@
+DROP DATABASE IF EXISTS HuellitasFelices;
+CREATE DATABASE HuellitasFelices;
+USE HuellitasFelices;
+
+-- 1. EMPLEADO: Para el login del colaborador
+CREATE TABLE EMPLEADO (
+    id_empleado INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_completo VARCHAR(50) NOT NULL,
+    usuario VARCHAR(30) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+-- 2. CLIENTE: Datos del dueño
+CREATE TABLE CLIENTE (
+    id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
+    cedula_id VARCHAR(20) UNIQUE NOT NULL,
+    telefono VARCHAR(15)
+);
+
+-- 3. MASCOTA:
+CREATE TABLE MASCOTA (
+    id_mascota INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_mascota VARCHAR(50) NOT NULL,
+    especie VARCHAR(30),
+    raza VARCHAR(30),
+    edad_anios INT,
+    id_cliente INT NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES CLIENTE(id_cliente) ON DELETE CASCADE
+);
+
+-- 4. SERVICIO_PRODUCTO: 
+CREATE TABLE SERVICIO_PRODUCTO (
+    codigo_sp VARCHAR(10) PRIMARY KEY, 
+    descripcion VARCHAR(255) NOT NULL,
+    precio_venta DECIMAL(10, 2) NOT NULL
+);
+
+-- 5. FACTURA: 
+CREATE TABLE FACTURA (
+    id_factura INT PRIMARY KEY AUTO_INCREMENT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_factura DECIMAL(10, 2) NOT NULL,
+    id_cliente INT NOT NULL,
+    id_empleado INT NOT NULL,
+    codigo_sp VARCHAR(10) NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES CLIENTE(id_cliente),
+    FOREIGN KEY (id_empleado) REFERENCES EMPLEADO(id_empleado),
+    FOREIGN KEY (codigo_sp) REFERENCES SERVICIO_PRODUCTO(codigo_sp)
+);
+
+-- TABLA DETALLE FACTURA
+CREATE TABLE DETALLE_FACTURA (
+    id_detalle INT PRIMARY KEY AUTO_INCREMENT,
+    id_factura INT NOT NULL,
+    codigo_sp VARCHAR(10) NOT NULL,
+    cantidad INT DEFAULT 1,
+    precio_unitario DECIMAL(10, 2) NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (id_factura) REFERENCES FACTURA(id_factura),
+    FOREIGN KEY (codigo_sp) REFERENCES SERVICIO_PRODUCTO(codigo_sp)
+);
