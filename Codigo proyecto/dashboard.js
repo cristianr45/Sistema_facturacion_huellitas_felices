@@ -3,11 +3,9 @@ if (!localStorage.getItem('usuarioNombre')) {
     window.location.href = "login.html";
 }
 
-
 const contentDiv = document.getElementById('dynamic-content');
 let carritoServicios = []; 
 
-// --- FUNCIÓN PARA ACTUALIZAR EL PANEL CENTRAL ---
 function updateContent(title, description, formHtml = "") {
     contentDiv.innerHTML = `
         <h2>${title}</h2>
@@ -17,8 +15,6 @@ function updateContent(title, description, formHtml = "") {
         </div>
     `;
 }
-
-// --- MÓDULOS DE NAVEGACIÓN ---
 
 // 1. Módulo de Clientes
 document.getElementById('btn-clientes').addEventListener('click', () => {
@@ -56,7 +52,7 @@ document.getElementById('btn-empleados').addEventListener('click', () => {
 });
 
 // 3. Módulo de Servicios
-document.getElementById('btn-servicios').addEventListener('click', () => {
+document.getElementById('btn-servicios').addEventListener('click', async () => {
     const form = `
         <div class="form-grid">
             <h4>Nuevo Servicio al Catálogo</h4>
@@ -65,8 +61,23 @@ document.getElementById('btn-servicios').addEventListener('click', () => {
             <input type="number" id="ser-precio" placeholder="Precio ($)" class="input-form">
         </div>
         <button class="btn-save" onclick="enviarDatosMySQL('Servicio')">Guardar Servicio</button>
+        
+        <div style="margin-top: 30px; grid-column: span 2;">
+            <h4>Servicios en Base de Datos</h4>
+            <table style="width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #ddd;">
+                <thead>
+                    <tr style="background: #eee;">
+                        <th style="padding: 8px; text-align: left;">Código</th>
+                        <th style="padding: 8px; text-align: left;">Descripción</th>
+                        <th style="padding: 8px; text-align: right;">Precio</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla-servicios"></tbody>
+            </table>
+        </div>
     `;
-    updateContent("Portafolio de Servicios", "Ingresa nuevos servicios para que aparezcan en el sistema.", form);
+    updateContent("Portafolio de Servicios", "Ingresa nuevos servicios y consulta el catálogo actual.", form);
+    cargarTablaServicios();
 });
 
 // 4. Módulo de Facturación
@@ -109,7 +120,6 @@ document.getElementById('btn-facturacion').addEventListener('click', () => {
 // --- LÓGICA DE INTEGRACIÓN (FETCH) ---
 
 async function enviarDatosMySQL(tipo) {
-    // Registro de Clientes y Mascotas
     if (tipo === 'ClienteMascota') {
         const payload = {
             cliente: {
@@ -125,54 +135,33 @@ async function enviarDatosMySQL(tipo) {
                 edad_anios: document.getElementById('mas-edad').value
             }
         };
-
-        if (!payload.cliente.cedula_id || !payload.mascota.nombre_mascota) {
-            return mostrarNotificacion("Atención", "Nombre de mascota y cédula son obligatorios.", "alerta");
-        }
-
         ejecutarFetch('http://localhost:3000/api/registrar-cliente', payload);
     }
 
-    // Registro de Empleados
     if (tipo === 'Empleado') {
         const payload = {
             nombre: document.getElementById('emp-nombre').value,
             usuario: document.getElementById('emp-usuario').value,
             password: document.getElementById('emp-pass').value
         };
-
-        if (!payload.nombre || !payload.usuario || !payload.password) {
-            return mostrarNotificacion("Campos Vacíos", "Complete los datos del empleado.", "alerta");
-        }
-
         ejecutarFetch('http://localhost:3000/api/registrar-empleado', payload);
     }
 
-    // Registro de Servicios
     if (tipo === 'Servicio') {
         const payload = {
             codigo: document.getElementById('ser-codigo').value,
             descripcion: document.getElementById('ser-desc').value,
             precio: document.getElementById('ser-precio').value
         };
-
-        if (!payload.codigo || !payload.precio) {
-            return mostrarNotificacion("Campos Vacíos", "Complete el código y precio del servicio.", "alerta");
-        }
-
         ejecutarFetch('http://localhost:3000/api/registrar-servicio', payload);
     }
 
-    // Procesar Factura
     if (tipo === 'Factura') {
-        if (carritoServicios.length === 0) {
-            return mostrarNotificacion("Carrito Vacío", "Agregue al menos un servicio.", "alerta");
-        }
+        if (carritoServicios.length === 0) return mostrarNotificacion("Carrito Vacío", "Agregue servicios.", "alerta");
         generarPDF();
     }
 }
 
-// Función Genérica para peticiones al servidor
 async function ejecutarFetch(url, datos) {
     try {
         const respuesta = await fetch(url, {
@@ -181,18 +170,47 @@ async function ejecutarFetch(url, datos) {
             body: JSON.stringify(datos)
         });
         const data = await respuesta.json();
+
         if (respuesta.ok) {
             mostrarNotificacion("¡Éxito!", data.mensaje, "exito");
             document.querySelectorAll('.input-form').forEach(input => input.value = "");
+            
+            // Refrescar tabla si estamos en el módulo de servicios
+            if (document.getElementById('cuerpo-tabla-servicios')) {
+                cargarTablaServicios();
+            }
         } else {
-            mostrarNotificacion("Error", data.error || "Ocurrió un problema", "error");
+            mostrarNotificacion("Error", data.error || "Problema técnico", "error");
         }
     } catch (error) {
-        mostrarNotificacion("Error de Servidor", "No hay conexión con el backend.", "error");
+        mostrarNotificacion("Error", "Sin conexión con el servidor", "error");
     }
 }
 
-// --- FUNCIONES AUXILIARES ---
+// --- TABLA DINÁMICA SERVICIOS ---
+async function cargarTablaServicios() {
+    try {
+        const respuesta = await fetch('http://localhost:3000/api/servicios');
+        const servicios = await respuesta.json();
+        const cuerpo = document.getElementById('cuerpo-tabla-servicios');
+        if (!cuerpo) return;
+
+        cuerpo.innerHTML = "";
+        servicios.forEach(s => {
+            cuerpo.innerHTML += `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">${s.codigo_sp}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">${s.descripcion}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$ ${parseFloat(s.precio_venta).toLocaleString()}</td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error("Error al cargar servicios:", error);
+    }
+}
+
+// --- FUNCIONES AUXILIARES (Facturación y Notificaciones) ---
 
 function agregarAlCarrito() {
     const select = document.getElementById('fac-servicio-select');
@@ -208,7 +226,7 @@ function agregarAlCarrito() {
     cuerpo.innerHTML = "";
     let total = 0;
     carritoServicios.forEach(s => {
-        cuerpo.innerHTML += `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${s.nombre}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$ ${s.precio.toLocaleString()}</td></tr>`;
+        cuerpo.innerHTML += `<tr><td style="padding: 8px;">${s.nombre}</td><td style="text-align: right;">$ ${s.precio.toLocaleString()}</td></tr>`;
         total += s.precio;
     });
     document.getElementById('total-final').value = "$ " + total.toLocaleString();
@@ -217,39 +235,22 @@ function agregarAlCarrito() {
 function generarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const clienteCedula = document.getElementById('fac-cliente').value;
-    const totalFactura = document.getElementById('total-final').value;
+    const cedula = document.getElementById('fac-cliente').value;
+    const total = document.getElementById('total-final').value;
 
-    if (!clienteCedula.trim()) {
-        return mostrarNotificacion("Falta Cédula", "Identifique al cliente para el recibo.", "alerta");
-    }
-
-    doc.setFontSize(18);
     doc.text("HUELLITAS FELICES - RECIBO", 105, 20, null, null, "center");
-    doc.setFontSize(12);
-    doc.text(`Cédula Cliente: ${clienteCedula}`, 20, 40);
-    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 50);
-    
-    let y = 70;
-    doc.text("Detalle de Servicios:", 20, 60);
+    doc.text(`Cédula: ${cedula}`, 20, 40);
+    let y = 60;
     carritoServicios.forEach(s => {
-        doc.text(`- ${s.nombre}: $${s.precio.toLocaleString()}`, 25, y);
+        doc.text(`- ${s.nombre}: $${s.precio.toLocaleString()}`, 20, y);
         y += 10;
     });
-
-    doc.setFont("helvetica", "bold");
-    doc.text(`TOTAL PAGADO: ${totalFactura}`, 20, y + 10);
-    
-    doc.save(`Factura_${clienteCedula}.pdf`);
-    mostrarNotificacion("Documento Generado", "La factura se ha descargado con éxito.", "exito");
+    doc.text(`TOTAL: ${total}`, 20, y + 10);
+    doc.save(`Factura_${cedula}.pdf`);
 }
 
-// --- SISTEMA DE NOTIFICACIONES MODALES ---
-
 function mostrarNotificacion(titulo, mensaje, tipo = 'exito') {
-    let icono = "✅";
-    let color = "#2ecc71";
-
+    let icono = "✅"; let color = "#2ecc71";
     if (tipo === 'error') { icono = "❌"; color = "#e74c3c"; }
     else if (tipo === 'alerta') { icono = "⚠️"; color = "#f1c40f"; }
 
@@ -257,7 +258,7 @@ function mostrarNotificacion(titulo, mensaje, tipo = 'exito') {
         <div id="modal-global" class="modal-overlay">
             <div class="modal-content">
                 <div style="font-size: 60px;">${icono}</div>
-                <h3 style="color: ${color}; margin-top: 10px;">${titulo}</h3>
+                <h3 style="color: ${color};">${titulo}</h3>
                 <p>${mensaje}</p>
                 <button class="btn-modal" onclick="cerrarNotificacion()">Aceptar</button>
             </div>
@@ -268,15 +269,9 @@ function mostrarNotificacion(titulo, mensaje, tipo = 'exito') {
 
 function cerrarNotificacion() {
     const modal = document.getElementById('modal-global');
-    if (modal) {
-        modal.style.opacity = "0";
-        setTimeout(() => modal.remove(), 200);
-    }
+    if (modal) modal.remove();
 }
 
-// --- LOGOUT ---
 document.getElementById('btn-logout').addEventListener('click', () => {
-    if(confirm("¿Seguro que desea salir del sistema?")) {
-        window.location.href = "login.html";
-    }
+    if(confirm("¿Desea salir?")) window.location.href = "login.html";
 });

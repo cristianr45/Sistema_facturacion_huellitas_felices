@@ -28,3 +28,4 @@ document.getElementById('btn-entrar').addEventListener('click', async () => {
         alert("No se pudo conectar con el servidor");
     }
 });
+
